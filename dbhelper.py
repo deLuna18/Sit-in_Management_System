@@ -37,3 +37,12 @@ def register_user(lastname: str, firstname: str, middlename: str,
     sql = "INSERT INTO users (lastname, firstname, middlename, course, year_level, email_address, username, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     return postprocess(sql, (lastname, firstname, middlename, course, year_level, email_address, username, password))
 
+def update_profile_picture(username: str, filename: str) -> bool:
+    sql = "UPDATE users SET profile_picture = ? WHERE username = ?"
+    return postprocess(sql, (filename, username))
+
+
+def get_student_by_username(username: str) -> dict:
+    sql = "SELECT * FROM users WHERE username = ?"
+    result = getprocess(sql, (username,))
+    return result[0] if result else None  

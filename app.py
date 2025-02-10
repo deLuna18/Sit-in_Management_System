@@ -1,8 +1,17 @@
 from flask import Flask, render_template, request, redirect, flash, session, make_response, url_for
-import dbhelper
+import dbhelper, os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = "deluna"
+
+UPLOAD_FOLDER = "static/uploads"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.after_request
 def disable_cache(response):
@@ -16,6 +25,37 @@ def home():
     if "user" in session:
         return redirect("/student_dashboard")
     return redirect("/student_login")
+
+# UPLOAD PROFILE PICTURE
+@app.route("/upload_profile_picture", methods=["POST"])
+def upload_profile_picture():
+    if "user" not in session:
+        flash("Please log in first.", "warning")
+        return redirect("/student_login")
+
+    if "file" not in request.files:
+        flash("No file part", "danger")
+        return redirect("/student_dashboard")
+
+    file = request.files["file"]
+    if file.filename == "":
+        flash("No selected file", "danger")
+        return redirect("/student_dashboard")
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(f"{session['user']}_{file.filename}")
+        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(file_path)
+
+        dbhelper.update_profile_picture(session["user"], filename)
+
+        flash("Profile picture updated!", "success")
+        return redirect("/student_dashboard")
+
+    flash("Invalid file type. Allowed: png, jpg, jpeg, gif", "danger")
+    return redirect("/student_dashboard")
+
+
 
 # LOGIN STUDENT
 @app.route("/student_login", methods=["GET", "POST"])
@@ -64,7 +104,15 @@ def student_dashboard():
     if "user" not in session:
         flash("Please log in first.", "warning")
         return redirect("/student_login")
-    return render_template("student_dashboard.html", username=session["user"])
+    
+    student_info = dbhelper.get_student_by_username(session["user"])
+
+    if not student_info:
+        flash("User not found!", "danger")
+        return redirect("/student_login")
+
+    return render_template("student_dashboard.html", student=student_info)
+
 
 # STAFF DASHBOARD
 @app.route("/staff_dashboard")
