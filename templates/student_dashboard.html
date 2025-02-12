@@ -6,10 +6,12 @@
     <title>Student Dashboard</title>
 
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
     body {
         background-color: #f8f9fa;
-        color: black;
-        font-family: Arial, sans-serif;
+        color: #333;
+        font-family: 'Poppins', Arial, sans-serif;
         margin: 0;
         padding: 0;
     }
@@ -25,29 +27,21 @@
 
     .navbar .navbar-brand {
         color: white;
-        font-weight: bold;
-        font-size: 1.5rem;
+        font-weight: 600;
+        font-size: 1.6rem;
+        text-decoration: none;
     }
-
     .navbar .nav-link {
         color: white;
         font-weight: bold;
         margin-right: 15px;
         text-decoration: none;
+        font-size: 1rem;
     }
 
     .navbar .nav-link:hover {
         text-decoration: underline;
-    }
-
-    .navbar .nav-items {
-        display: flex;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-    }
-
-    .navbar .nav-link.btn {
-        white-space: nowrap; 
+        color: #333;
     }
 
     .dashboard-container {
@@ -63,27 +57,44 @@
         border: none;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         width: 100%;
-        margin: 20px 10px; 
+        margin: 20px 10px;
         display: flex;
         flex-direction: column;
         height: 100%;
+        border-radius: 8px;
     }
 
     .card-header {
         background-color: #0d6efd;
         color: white;
-        font-weight: bold;
+        font-weight: 600;
         text-align: center;
-        padding: 10px;
+        padding: 12px;
+        font-size: 1.2rem;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
     }
 
     .card-body {
         padding: 20px;
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.5;
     }
 
     .card-body p {
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         text-align: left;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .profile-img {
+        max-width: 130px;
+        max-height: 130px;
+        /* border-radius: 50%;
+        border: 3px solid #ddd;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
     }
 
     .notification-container {
@@ -140,16 +151,19 @@
     .student-info {
         flex: 1 1 30%; 
         max-width: 30%; 
+        height: 60vh;
     }
 
     .announcements {
-        flex: 1 1 50%; 
+        flex: 1 1 auto; 
         max-width: 50%; 
     }
 
     .rules-card {
         flex: 1 1 20%; 
         max-width: 20%; 
+        height: 60vh;
+        overflow-y: auto;
     }
 
     .student-info, .announcements, .rules-card {
@@ -159,9 +173,24 @@
     .student-info img {
         max-width: 120px;
         max-height: 120px;
-        border-radius: 50%;
-        border: 3px solid #ddd;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        /* border-radius: 50%;
+        border: 3px solid #0D6EFD; */
+        /* background-color: rgb(135, 133, 133);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+    }
+
+    .text-center{
+        text-align: center;
+    }
+
+    .rules-card .card-body {
+        overflow-y: scroll;
+        scrollbar-width: none; 
+        -ms-overflow-style: none; 
+    }
+
+    .rules-card .card-body::-webkit-scrollbar {
+        display: none; 
     }
 
     @media (max-width: 1024px) {
@@ -173,11 +202,11 @@
         }
 
         .navbar .navbar-brand {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
         }
 
         .navbar .nav-link {
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
 
         .card-header {
@@ -185,7 +214,7 @@
         }
 
         .card-body p {
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
     }
 
@@ -202,7 +231,7 @@
         }
 
         .navbar .nav-link {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
 
         .card-header {
@@ -210,10 +239,9 @@
         }
 
         .card-body p {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
     }
-
 </style>
 </head>
 <body>
@@ -227,7 +255,7 @@
             <div class="notification-dropdown" id="notificationDropdown">
                 <ul id="notificationList"></ul>
             </div>
-            <a class="nav-link" href="#">Edit Profile</a>
+            <a class="nav-link" href="{{ url_for('edit_profile') }}">Profile</a>
             <a class="nav-link" href="#">History</a>
             <a class="nav-link" href="#">Reservation</a>
             <a class="nav-link btn btn-warning text-dark px-3" href="{{ url_for('logout') }}">Log Out</a>
@@ -255,26 +283,24 @@
                 <i class="bi bi-person-circle"></i> Student Information
             </div>
             <div class="card-body text-start p-4">
-                <div class="text-center mb-3" style="text-align: center;">
+                <div class="text-center mb-3">
                     <img id="profile-pic" 
-                         src="{{ url_for('static', filename='uploads/' + student.profile_picture) }}" 
-                         alt="Profile" class="rounded-circle border shadow-sm">
+     src="{{ url_for('static', filename='uploads/' + student.profile_picture) }}" 
+     alt="Profile Picture" class="profile-img" style="width: 150px; height: 150px;">
+
                 </div>
-                <form action="{{ url_for('upload_profile_picture') }}" method="post" enctype="multipart/form-data" class="text-center mt-3">
-                    <label class="form-label fw-bold">Upload Profile Picture</label>
-                    <div class="input-group">
-                        <input type="file" class="form-control" name="file" accept="image/*" required id="profile-upload" onchange="previewImage()">
-                        <button type="submit" class="btn btn-primary">Upload</button>
-                    </div>
-                </form>
-                <p><strong>Name: </strong> {{ student.firstname }} {{ student.middlename }} {{ student.lastname }}</p>
-                <p><strong>Course: </strong> {{ student.course }}</p>
-                <p><strong>Year: </strong> {{ student.year_level }}</p>
-                <p><strong>Email: </strong> {{ student.email_address }}</p>
-                <p><strong>Address: </strong> {{ student.address }}</p>
-                <p><strong>Session: </strong> {{ student.session_count }}</p>
+        
+                <div class="student-details">
+                    <p><i class="bi bi-person-fill"></i> <strong>Name:</strong> {{ student.firstname }} {{ student.middlename }} {{ student.lastname }}</p>
+                    <p><i class="bi bi-book"></i> <strong>Course:</strong> {{ student.course }}</p>
+                    <p><i class="bi bi-calendar"></i> <strong>Year:</strong> {{ student.year_level }}</p>
+                    <p><i class="bi bi-envelope"></i> <strong>Email:</strong> {{ student.email_address }}</p>
+                    <p><i class="bi bi-geo-alt"></i> <strong>Address:</strong> {{ student.address }}</p>
+                    <p><i class="bi bi-clock-history"></i> <strong>Session:</strong> {{ student.session_count }}</p>
+                </div>
             </div>
         </div>
+        
 
         <div class="card announcements" style="height: 60vh;">
             <div class="card-header">Announcement</div>
@@ -290,10 +316,16 @@
         <div class="card rules-card" >
             <div class="card-header">Rules and Regulation</div>
             <div class="card-body" style="overflow-y: scroll;">
-                <h5 class="text-center">University of Cebu</h5>
+                <h5 style="text-align: center; margin: 0; font-size: 1.2em;">University of Cebu</h5>
                 <p><strong>COLLEGE OF INFORMATION & COMPUTER STUDIES</strong></p>
                 <p><strong>LABORATORY RULES AND REGULATIONS</strong></p>
                 <ol>
+                    <li>Maintain silence, proper decorum, and discipline inside the laboratory.</li>
+                    <li>Games are not allowed inside the lab.</li>
+                    <li>Surfing the Internet is allowed only with the permission of the instructor.</li>
+                    <li>Maintain silence, proper decorum, and discipline inside the laboratory.</li>
+                    <li>Games are not allowed inside the lab.</li>
+                    <li>Surfing the Internet is allowed only with the permission of the instructor.</li>
                     <li>Maintain silence, proper decorum, and discipline inside the laboratory.</li>
                     <li>Games are not allowed inside the lab.</li>
                     <li>Surfing the Internet is allowed only with the permission of the instructor.</li>

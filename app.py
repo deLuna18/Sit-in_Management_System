@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, flash, session, make_response, url_for
 import dbhelper, os
 from werkzeug.utils import secure_filename
+from PIL import Image  
+
 
 app = Flask(__name__)
 app.secret_key = "deluna"
@@ -34,7 +36,7 @@ def upload_profile_picture():
         return redirect("/student_login")
 
     if "file" not in request.files:
-        flash("No file part", "danger")
+        flash("No file selected.", "danger")
         return redirect("/student_dashboard")
 
     file = request.files["file"]
@@ -43,18 +45,23 @@ def upload_profile_picture():
         return redirect("/student_dashboard")
 
     if file and allowed_file(file.filename):
+        if file.content_length > 2 * 1024 * 1024:  
+            flash("File size exceeds 2MB limit.", "danger")
+            return redirect("/student_dashboard")
+
         filename = secure_filename(f"{session['user']}_{file.filename}")
         file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        file.save(file_path)
+
+        image = Image.open(file)
+        image.thumbnail((300, 300)) 
+        image.save(file_path)
 
         dbhelper.update_profile_picture(session["user"], filename)
-
         flash("Profile picture updated!", "success")
         return redirect("/student_dashboard")
 
     flash("Invalid file type. Allowed: png, jpg, jpeg, gif", "danger")
     return redirect("/student_dashboard")
-
 
 
 # LOGIN STUDENT
@@ -113,7 +120,6 @@ def student_dashboard():
 
     return render_template("student_dashboard.html", student=student_info)
 
-
 # STAFF DASHBOARD
 @app.route("/staff_dashboard")
 def staff_dashboard():
@@ -122,6 +128,48 @@ def staff_dashboard():
         return redirect("/student_login")
     staff_list = dbhelper.get_all_staff()
     return render_template("staff_dashboard.html", username=session["user"], staff_list=staff_list)
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if "user" not in session:
+        flash("Please log in first.", "warning")
+        return redirect("/student_login")
+
+    student_info = dbhelper.get_student_by_username(session["user"])
+    if not student_info:
+        flash("User not found!", "danger")
+        return redirect("/student_login")
+
+    student_info.setdefault("profile_picture", "default-profile.png")
+
+    if request.method == 'POST':
+        firstname = request.form['firstname']
+        middlename = request.form['middlename']
+        lastname = request.form['lastname']
+        course = request.form['course']
+        year_level = request.form['year_level']
+        email_address = request.form['email_address']
+        address = request.form['address']
+
+        file = request.files.get("profile_image")
+        profile_picture = student_info["profile_picture"]
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(f"{session['user']}_{file.filename}")
+            file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            file.save(file_path)
+            profile_picture = filename
+
+        dbhelper.update_student_profile(session["user"], firstname, middlename, lastname, 
+                                        course, year_level, email_address, address, profile_picture)
+
+        flash("Profile updated successfully!", "success")
+        return redirect("/student_dashboard")
+
+    return render_template("edit_profile.html", student=student_info)
+
+
+
 
 # LOGOUT FOR STUDENTS
 @app.route("/logout")

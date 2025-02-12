@@ -44,5 +44,32 @@ def update_profile_picture(username: str, filename: str) -> bool:
 
 def get_student_by_username(username: str) -> dict:
     sql = "SELECT * FROM users WHERE username = ?"
-    result = getprocess(sql, (username,))
-    return result[0] if result else None  
+    student_list = getprocess(sql, (username,))
+
+    if student_list:
+        student = student_list[0]  # Convert row to dict
+        student["profile_picture"] = student.get("profile_picture") or "default-profile.png"
+        return student
+
+    return None  # Return None if no student found
+
+
+
+def update_student_profile(username: str, firstname: str, middlename: str, lastname: str, 
+                           course: str, year_level: str, email_address: str, address: str, 
+                           profile_picture: str) -> bool:
+    sql = """UPDATE users SET 
+                firstname = ?, 
+                middlename = ?, 
+                lastname = ?, 
+                course = ?, 
+                year_level = ?, 
+                email_address = ?, 
+                address = ?, 
+                profile_picture = ? 
+            WHERE username = ?"""
+    
+    return postprocess(sql, (firstname, middlename, lastname, course, year_level, 
+                             email_address, address, profile_picture, username))
+
+

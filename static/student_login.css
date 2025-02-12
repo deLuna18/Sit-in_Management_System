@@ -35,7 +35,10 @@ p{
     background: rgba(255, 255, 255, 0.95);
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+<<<<<<< HEAD
     margin-top: 60px; 
+=======
+>>>>>>> e8e1123 (updated dashboard and edit profile)
     text-align: center;
 }
 
